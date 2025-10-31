@@ -1,0 +1,61 @@
+import mongoose, { Document, Schema } from "mongoose";
+
+export interface IAuction extends Document {
+  auctionId: string;
+  carId: string;
+  createdAt: Date;
+  currentPrice: number;
+  endTime: Date;
+  startingPrice: number;
+  startTime: Date;
+  status: "active" | "cancelled" | "ended" | "upcoming";
+}
+
+const AuctionSchema: Schema = new Schema({
+  auctionId: {
+    required: true,
+    type: String,
+    unique: true,
+  },
+  carId: {
+    ref: "Car",
+    required: true,
+    type: Schema.Types.ObjectId,
+  },
+  createdAt: {
+    default: Date.now,
+    type: Date,
+  },
+  currentPrice: {
+    min: 0,
+    required: true,
+    type: Number,
+  },
+  endTime: {
+    required: true,
+    type: Date,
+  },
+  startingPrice: {
+    min: 0,
+    required: true,
+    type: Number,
+  },
+  startTime: {
+    required: true,
+    type: Date,
+  },
+  status: {
+    default: "upcoming",
+    enum: ["upcoming", "active", "ended", "cancelled"],
+    required: true,
+    type: String,
+  },
+});
+
+// Index for querying active auctions
+AuctionSchema.index({ endTime: 1, status: 1 });
+
+// Index for querying auctions by car
+AuctionSchema.index({ carId: 1 });
+
+export default mongoose.model<IAuction>("Auction", AuctionSchema);

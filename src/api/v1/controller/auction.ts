@@ -80,3 +80,48 @@ export const createAuction = asyncHandler(async (req: Request, res: Response) =>
     message: "Auction created successfully.",
   });
 });
+
+export const updateAuctionStatus = asyncHandler(async (req: Request, res: Response) => {
+  const { auctionId } = req.params;
+  const { status } = req.body;
+
+  // Validate status
+  const validStatuses = ["pending", "active", "ended", "cancelled"];
+  if (!validStatuses.includes(status)) {
+    res.status(400);
+    throw new Error("Invalid status. Status must be one of: pending, active, ended, cancelled");
+  }
+
+  // Find and update auction
+  const auction = await auctionModel.findOne({ auctionId });
+
+  if (!auction) {
+    res.status(404);
+    throw new Error("Auction not found");
+  }
+
+  // Additional validation rules
+  if (auction.status === "ended" || auction.status === "cancelled") {
+    res.status(400);
+    throw new Error("Cannot update status of ended or cancelled auctions");
+  }
+
+  if (status === "active" && new Date() < auction.startTime) {
+    res.status(400);
+    throw new Error("Cannot activate auction before start time");
+  }
+
+  if (status === "active" && new Date() > auction.endTime) {
+    res.status(400);
+    throw new Error("Cannot activate auction after end time");
+  }
+
+  // Update auction status
+  auction.status = status;
+  await auction.save();
+
+  res.status(200).json({
+    auction,
+    message: `Auction status updated successfully to ${status}`,
+  });
+});

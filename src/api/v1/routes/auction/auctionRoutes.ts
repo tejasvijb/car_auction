@@ -1,6 +1,6 @@
 import express from "express";
 
-import { createAuction, generateToken } from "../../controller/auction.js";
+import { createAuction, generateToken, updateAuctionStatus } from "../../controller/auction.js";
 import { validateInput } from "../../middleware/validateInput.js";
 import validateToken from "../../middleware/validateToken.js";
 import { loginSchema } from "../../types/auctionTypes.js";
@@ -12,13 +12,7 @@ router.post("/token", validateInput(loginSchema), generateToken);
 
 router.post("/createAuction", validateToken, validateInput(carAuctionInputFields), createAuction);
 
-router.patch("/status/:auctionId", validateToken, (req, res) => {
-  const { auctionId } = req.params;
-  const { status } = req.body;
-
-  // Here you would typically update the auction status in your database
-  res.status(200).json({ status: `Auction ${auctionId} status updated to ${status}`, username: req.user?.username || "user not found" });
-});
+router.patch("/status/:auctionId", validateToken, updateAuctionStatus);
 
 router.get("/:auctionId/winnerBid", validateToken, (req, res) => {
   const { auctionId } = req.params;

@@ -1,6 +1,6 @@
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
-export interface IAuction extends Document {
+export interface IAuction {
   auctionId: string;
   carId: string;
   createdAt: Date;
@@ -8,7 +8,7 @@ export interface IAuction extends Document {
   endTime: Date;
   startingPrice: number;
   startTime: Date;
-  status: "active" | "cancelled" | "ended" | "upcoming";
+  status: "active" | "cancelled" | "ended" | "pending";
 }
 
 const AuctionSchema: Schema = new Schema({
@@ -20,7 +20,7 @@ const AuctionSchema: Schema = new Schema({
   carId: {
     ref: "Car",
     required: true,
-    type: Schema.Types.ObjectId,
+    type: String,
   },
   createdAt: {
     default: Date.now,
@@ -45,8 +45,8 @@ const AuctionSchema: Schema = new Schema({
     type: Date,
   },
   status: {
-    default: "upcoming",
-    enum: ["upcoming", "active", "ended", "cancelled"],
+    default: "pending",
+    enum: ["pending", "active", "ended", "cancelled"],
     required: true,
     type: String,
   },

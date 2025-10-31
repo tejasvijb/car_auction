@@ -1,25 +1,29 @@
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose, { Schema } from "mongoose";
+import z from "zod";
 
-export interface ICar extends Document {
-  car_model: string;
-  carId: string;
-  color: string;
-  createdAt: Date;
-  make: string;
-  mileage: number;
-  vin: string;
-  year: string;
-}
+export const zodCarSchema = z.object({
+  carId: z.uuid(),
+  carModel: z.string().min(2).max(100),
+  color: z.string().min(2).max(50),
+  createdAt: z.date().default(new Date()),
+  make: z.string().min(2).max(100),
+  mileage: z.number().min(0),
+  vin: z.string().min(17).max(17),
+  year: z.string().min(4).max(4),
+});
+
+// create a TypeScript interface which extends Document for Car document from zod schema
+export type ICar = z.infer<typeof zodCarSchema>;
 
 const CarSchema: Schema = new Schema({
-  car_model: {
-    required: true,
-    type: String,
-  },
   carId: {
     required: true,
     type: String,
     unique: true,
+  },
+  carModel: {
+    required: true,
+    type: String,
   },
   color: {
     required: true,

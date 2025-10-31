@@ -1,17 +1,16 @@
 import express from "express";
 
-import { generateToken } from "../../controller/auction.js";
+import { createAuction, generateToken } from "../../controller/auction.js";
 import { validateInput } from "../../middleware/validateInput.js";
 import validateToken from "../../middleware/validateToken.js";
 import { loginSchema } from "../../types/auctionTypes.js";
+import { carAuctionInputFields } from "../../types/carTypes.js";
 
 const router = express.Router();
 
 router.post("/token", validateInput(loginSchema), generateToken);
 
-router.post("/createAuction", validateToken, (req, res) => {
-  res.status(200).json({ status: "Create Auction service is running", username: req.user?.username || "user not found" });
-});
+router.post("/createAuction", validateToken, validateInput(carAuctionInputFields), createAuction);
 
 router.patch("/status/:auctionId", validateToken, (req, res) => {
   const { auctionId } = req.params;

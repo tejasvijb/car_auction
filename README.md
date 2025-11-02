@@ -15,6 +15,7 @@ A RESTful API service for managing car auctions. This system allows users to cre
 - Node.js (v22.17.0)
 - npm (v6 or higher)
 - Git
+- Mongodb compass for local development or connection string for production
 
 ## Installation
 

@@ -4,7 +4,9 @@ import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
 
 import auctionModel from "../models/auction.model.js";
+import bidModel from "../models/bid.model.js";
 import carModel from "../models/car.model.js";
+import dealerModel from "../models/dealer.model.js";
 import { LoginType } from "../types/auctionTypes.js";
 
 export const generateToken = asyncHandler(async (req: Request, res: Response) => {
@@ -123,5 +125,130 @@ export const updateAuctionStatus = asyncHandler(async (req: Request, res: Respon
   res.status(200).json({
     auction,
     message: `Auction status updated successfully to ${status}`,
+  });
+});
+
+export const placeBid = asyncHandler(async (req: Request, res: Response) => {
+  const { auctionId, bidAmount, dealerId } = req.body;
+
+  // Find the auction
+  const auction = await auctionModel.findOne({ auctionId });
+  if (!auction) {
+    res.status(404).json({ message: "Auction not found" });
+    return;
+  }
+
+  // Check if auction is active
+  if (auction.status !== "active") {
+    res.status(400).json({ message: "Bids can only be placed on active auctions" });
+    return;
+  }
+
+  // Check auction timing
+  const now = new Date();
+  if (now < auction.startTime || now > auction.endTime) {
+    res.status(400).json({ message: "Auction is not currently active" });
+    return;
+  }
+
+  // Check if dealer exists
+  const dealer = await dealerModel.findOne({ dealerId });
+  if (!dealer) {
+    res.status(404).json({ message: "Dealer not found" });
+    return;
+  }
+
+  // Validate bid amount
+  if (bidAmount <= auction.currentPrice) {
+    res.status(400).json({ message: `Bid amount must be higher than current price of ${auction.currentPrice}` });
+    return;
+  }
+
+  // Create new bid
+  const bid = {
+    auctionId: auction.auctionId, // Use the string auctionId from the auction
+    bidAmount,
+    bidId: uuidv4(),
+    dealerId: dealer.dealerId, // Use the string dealerId from the dealer
+    placedAt: now,
+    previousBid: auction.currentPrice,
+  };
+
+  // Update auction's current price
+  auction.currentPrice = bidAmount;
+  await auction.save();
+
+  // Save the bid
+  await bidModel.create(bid);
+
+  res.status(201).json({
+    bid,
+    message: "Bid placed successfully",
+  });
+});
+
+export const getWinnerBid = asyncHandler(async (req: Request, res: Response) => {
+  const { auctionId } = req.params;
+
+  // Find the auction
+  const auction = await auctionModel.findOne({ auctionId });
+  if (!auction) {
+    res.status(404).json({ message: "Auction not found" });
+    return;
+  }
+
+  // Check if auction is ended
+  if (auction.status !== "ended") {
+    res.status(400).json({ message: "Cannot get winner bid for an auction that hasn't ended" });
+    return;
+  }
+
+  // Get the highest bid for this auction
+  const winnerBid = await bidModel.findOne({ auctionId }).sort({ bidAmount: -1 }).lean();
+
+  if (!winnerBid) {
+    res.status(404).json({ message: "No bids found for this auction" });
+    return;
+  }
+
+  // Get dealer details
+  const dealer = await dealerModel.findOne({ dealerId: winnerBid.dealerId }).lean();
+
+  if (!winnerBid) {
+    res.status(404).json({ message: "No bids found for this auction" });
+    return;
+  }
+
+  // Get car details for the auction
+  const car = await carModel.findOne({ carId: auction.carId }).lean();
+
+  res.status(200).json({
+    auction: {
+      auctionId: auction.auctionId,
+      endTime: auction.endTime,
+      finalPrice: auction.currentPrice,
+      startTime: auction.startTime,
+    },
+    car: car
+      ? {
+          carModel: car.carModel,
+          make: car.make,
+          vin: car.vin,
+          year: car.year,
+        }
+      : null,
+    winningBid: {
+      bidAmount: winnerBid.bidAmount,
+      bidId: winnerBid.bidId,
+      placedAt: winnerBid.placedAt,
+      winner: dealer
+        ? {
+            dealerId: dealer.dealerId,
+            email: dealer.email,
+            name: dealer.name,
+            phone: dealer.phone,
+          }
+        : null,
+    },
   });
 });

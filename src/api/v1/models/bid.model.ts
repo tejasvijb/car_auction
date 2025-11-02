@@ -13,7 +13,7 @@ const BidSchema: Schema = new Schema({
   auctionId: {
     ref: "Auction",
     required: true,
-    type: Schema.Types.ObjectId,
+    type: String,
   },
   bidAmount: {
     min: 0,
@@ -28,7 +28,7 @@ const BidSchema: Schema = new Schema({
   dealerId: {
     ref: "Dealer",
     required: true,
-    type: Schema.Types.ObjectId,
+    type: String,
   },
   placedAt: {
     default: Date.now,

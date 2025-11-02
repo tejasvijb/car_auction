@@ -7,4 +7,11 @@ export const loginSchema = z.object({
 
 export const auctionStatusEnum = z.enum(["active", "cancelled", "ended", "upcoming"]);
 
+export const placeBidSchema = z.object({
+  auctionId: z.uuid(),
+  bidAmount: z.number().positive(),
+  dealerId: z.uuid(),
+});
+
 export type LoginType = z.infer<typeof loginSchema>;
+export type PlaceBidType = z.infer<typeof placeBidSchema>;

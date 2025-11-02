@@ -1,9 +1,9 @@
 import express from "express";
 
-import { createAuction, generateToken, updateAuctionStatus } from "../../controller/auction.js";
+import { createAuction, generateToken, getWinnerBid, placeBid, updateAuctionStatus } from "../../controller/auction.js";
 import { validateInput } from "../../middleware/validateInput.js";
 import validateToken from "../../middleware/validateToken.js";
-import { loginSchema } from "../../types/auctionTypes.js";
+import { loginSchema, placeBidSchema } from "../../types/auctionTypes.js";
 import { carAuctionInputFields } from "../../types/carTypes.js";
 
 const router = express.Router();
@@ -14,14 +14,8 @@ router.post("/createAuction", validateToken, validateInput(carAuctionInputFields
 
 router.patch("/status/:auctionId", validateToken, updateAuctionStatus);
 
-router.get("/:auctionId/winnerBid", validateToken, (req, res) => {
-  const { auctionId } = req.params;
-  // Here you would typically fetch the winner bid from your database
-  res.status(200).json({ status: `Winner bid for auction ${auctionId} fetched successfully`, username: req.user?.username || "user not found" });
-});
+router.post("/placeBids", validateToken, validateInput(placeBidSchema), placeBid);
 
-router.post("/placeBids", validateToken, (req, res) => {
-  res.status(200).json({ status: "Place Bids service is running", username: req.user?.username || "user not found" });
-});
+router.get("/:auctionId/winnerBid", validateToken, getWinnerBid);
 
 export { router as auctionRoutes };
